@@ -119,20 +119,21 @@ async function main(){
     //const owner = await getOwnerForNFT(c, "AP7VntKBj4253RV6ktMrZJst5JFFmrQnHy29HC7rHvd");
     //console.log(owner.toBase58());
 
-    if(fs.existsSync(PROGRESS_FILE_PATH)){
-        const allInfo = readJson();
-        
-        allInfo.forEach(async tokenInfo => {
-            if (!tokenInfo.owner) {
-                tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.tokenMint)).toBase58();
-                writeJson(allInfo);
-            }
-        });
-    } else {
+    if(!fs.existsSync(PROGRESS_FILE_PATH)){
         const allInfo = await getAllNFTsForCreator(c, "8P3i7K4voDLQsAGQi5yGS2UikJtEVRLSnnx69zugr6Dt");
         writeJson(allInfo);
         console.log("file saved");
     }
+    
+    const allInfo = readJson();
+        
+    allInfo.forEach(async tokenInfo => {
+        if (!tokenInfo.owner) {
+            tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.tokenMint)).toBase58();
+            writeJson(allInfo);
+        }
+    });
+    console.log("DONE");
 }
 
 main();
