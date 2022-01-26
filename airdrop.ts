@@ -93,7 +93,7 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
         
         allInfo[i] = new TokenInfo(metadataAccountPK, tokenMint);
 
-        allInfo[i].show();
+        //allInfo[i].show();
 
         const nameLenght = accountList[i].account.data.readUInt32LE(1+32+32);
         const nameBuffer = accountList[i].account.data.slice(1+32+32+4, 1+32+32+4+32);
@@ -104,7 +104,7 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
             name += String.fromCharCode(nameBuffer.readUInt8(j));
         }
         allInfo[i].nftName = name;
-        console.log(name);
+        //console.log(name);
     }
     return allInfo;
 
@@ -120,13 +120,14 @@ async function main(){
     //console.log(owner.toBase58());
 
     if(!fs.existsSync(PROGRESS_FILE_PATH)){
-        const allInfo = await getAllNFTsForCreator(c, "8P3i7K4voDLQsAGQi5yGS2UikJtEVRLSnnx69zugr6Dt");
+        const allInfo = await getAllNFTsForCreator(c, "PUT_VERIFIED_CREATOR_HERE");
         writeJson(allInfo);
         console.log("file saved");
     }
     
     const allInfo = readJson();
         
+    console.log("finding owners...")
     allInfo.forEach(async tokenInfo => {
         if (!tokenInfo.owner) {
             tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.tokenMint)).toBase58();
