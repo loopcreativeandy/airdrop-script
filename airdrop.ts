@@ -3,6 +3,22 @@ import * as web3 from '@solana/web3.js';
 import * as anchor from "@project-serum/anchor";
 import { assert } from 'console';
 import * as splToken from "@solana/spl-token";
+import { token } from '@project-serum/anchor/dist/cjs/utils';
+
+class TokenInfo {
+    metadataAccount: string;
+    tokenMint: string;
+    nftName: string | null = null;
+
+    constructor(metadataAccount: string, tokenMint: string) {
+        this.metadataAccount = metadataAccount;
+        this.tokenMint = tokenMint;
+    }
+
+    show(){
+        console.log(this.metadataAccount + " -> " + this.tokenMint);
+    }
+}
 
 async function getOwnerForNFT(c: web3.Connection, tokenMintString: string) : Promise<web3.PublicKey>{
 
@@ -30,17 +46,52 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
         dataSlice: undefined,
         filters: [
             {
-                "dataSize":
                 "memcmp": {
-                    "offset": 0,
+                    "offset": 1 + // key
+                    32 + // update auth
+                    32 + // mint
+                    4 + // name string length
+                    32 + //MAX_NAME_LENGTH + // name
+                    4 + // uri string length
+                    200 + // MAX_URI_LENGTH + // uri*
+                    4 + // symbol string length
+                    10 + // MAX_SYMBOL_LENGTH + // symbol
+                    2 + // seller fee basis points
+                    1 + // whether or not there is a creators vec
+                    4, // creators
                     "bytes": verifiedCreator
                 }
             }
         ]
     }
-    const accountList = await c.getProgramAccounts(splToken.TOKEN_PROGRAM_ID, config);
 
-    console.log(accountList);
+    const TOKEN_METADATA_PROGRAM_ID = new web3.PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+    const accountList = await c.getProgramAccounts(TOKEN_METADATA_PROGRAM_ID, config);
+
+    //console.log(accountList);
+
+    const allInfo : TokenInfo[] = [];
+
+    for (let i =0; i<accountList.length; i++){
+        const metadataAccountPK = accountList[i].pubkey.toBase58()
+
+        const tokenMint = new web3.PublicKey(accountList[i].account.data.slice(1+32, 1+32+32)).toBase58();
+        
+        allInfo[i] = new TokenInfo(metadataAccountPK, tokenMint);
+
+        allInfo[i].show();
+
+        const nameLenght = accountList[i].account.data.readUInt32LE(1+32+32);
+        const nameBuffer = accountList[i].account.data.slice(1+32+32+4, 1+32+32+4+32);
+        
+        //console.log(nameLenght);
+        let name = "";
+        for (let j = 0; j< nameLenght; j++){
+            name += String.fromCharCode(nameBuffer.readUInt8(j));
+        }
+        allInfo[i].nftName = name;
+        console.log(name);
+    }
     
 
 }
@@ -48,13 +99,13 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
 async function main(){
     
     
-    const rpcHost = "https://api.mainnet-beta.solana.com"
+    const rpcHost = "https://ssc-dao.genesysgo.net/"
     const c = new anchor.web3.Connection(rpcHost);
 
     //const owner = await getOwnerForNFT(c, "AP7VntKBj4253RV6ktMrZJst5JFFmrQnHy29HC7rHvd");
     //console.log(owner.toBase58());
 
-    await getAllNFTsForCreator(c, "2wtqpaZZArqYaja55wJ3Wp6gtitWAncG1FwabGV2yNwF");
+    await getAllNFTsForCreator(c, "BwuSuemEWHBdUNcCiQ8m9Nd595mnYD3nCfTkNw6DQvmN");
 }
 
 main();
