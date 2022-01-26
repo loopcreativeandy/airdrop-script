@@ -4,11 +4,16 @@ import * as anchor from "@project-serum/anchor";
 import { assert } from 'console';
 import * as splToken from "@solana/spl-token";
 import { token } from '@project-serum/anchor/dist/cjs/utils';
+const fs = require('fs');
+
+const PROGRESS_FILE_PATH = "./progress.json";
 
 class TokenInfo {
     metadataAccount: string;
     tokenMint: string;
     nftName: string | null = null;
+    owner: string | null = null;
+    txid: string | null = null;
 
     constructor(metadataAccount: string, tokenMint: string) {
         this.metadataAccount = metadataAccount;
@@ -16,8 +21,17 @@ class TokenInfo {
     }
 
     show(){
-        console.log(this.metadataAccount + " -> " + this.tokenMint);
+        console.log(this.metadataAccount + " -> " + this.tokenMint +' -> '+ this.owner);
     }
+}
+
+function writeJson(data: TokenInfo[]){
+    let json = JSON.stringify(data);
+    fs.writeFileSync(PROGRESS_FILE_PATH, json);
+}
+
+function readJson(): TokenInfo[] {
+    return JSON.parse(fs.readFileSync(PROGRESS_FILE_PATH).toString());
 }
 
 async function getOwnerForNFT(c: web3.Connection, tokenMintString: string) : Promise<web3.PublicKey>{
@@ -38,7 +52,7 @@ async function getOwnerForNFT(c: web3.Connection, tokenMintString: string) : Pro
     return owner;
 }
 
-async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string){
+async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string) : Promise<TokenInfo[]>{
 
     const config : web3.GetProgramAccountsConfig = {
         commitment: undefined,
@@ -92,7 +106,7 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
         allInfo[i].nftName = name;
         console.log(name);
     }
-    
+    return allInfo;
 
 }
 
@@ -105,7 +119,20 @@ async function main(){
     //const owner = await getOwnerForNFT(c, "AP7VntKBj4253RV6ktMrZJst5JFFmrQnHy29HC7rHvd");
     //console.log(owner.toBase58());
 
-    await getAllNFTsForCreator(c, "BwuSuemEWHBdUNcCiQ8m9Nd595mnYD3nCfTkNw6DQvmN");
+    if(fs.existsSync(PROGRESS_FILE_PATH)){
+        const allInfo = readJson();
+        
+        allInfo.forEach(async tokenInfo => {
+            if (!tokenInfo.owner) {
+                tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.tokenMint)).toBase58();
+                writeJson(allInfo);
+            }
+        });
+    } else {
+        const allInfo = await getAllNFTsForCreator(c, "8P3i7K4voDLQsAGQi5yGS2UikJtEVRLSnnx69zugr6Dt");
+        writeJson(allInfo);
+        console.log("file saved");
+    }
 }
 
 main();
