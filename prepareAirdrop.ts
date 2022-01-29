@@ -6,31 +6,37 @@ import * as splToken from "@solana/spl-token";
 import { token } from '@project-serum/anchor/dist/cjs/utils';
 const fs = require('fs');
 
-const PROGRESS_FILE_PATH = "./progress.json";
+const VERIFIED_CREATOR = "AHx6cQKhJQ6vV9zhb37B7gKtRRGDuLtTfNWgvMiLDJp7";
+const TOKEN_TO_SEND = "toKPe7ENJiRBANPLnnp4dHs7ccFyHRg2oSEPdDfumg8";
+const AMOUNT_TO_SEND = 42000000000; // including decimans
 
-class TokenInfo {
+export const PROGRESS_FILE_PATH = "./progress.json";
+
+export class TokenInfo {
     metadataAccount: string;
-    tokenMint: string;
-    nftName: string | null = null;
-    owner: string | null = null;
-    txid: string | null = null;
+    nftTokenMint: string;
+    nftName: string | undefined;
+    owner: string | undefined;
+    sendableTokenMint: string | undefined;
+    sendableAmount: number | undefined;
+    txid: string | undefined;
 
     constructor(metadataAccount: string, tokenMint: string) {
         this.metadataAccount = metadataAccount;
-        this.tokenMint = tokenMint;
+        this.nftTokenMint = tokenMint;
     }
 
     show(){
-        console.log(this.metadataAccount + " -> " + this.tokenMint +' -> '+ this.owner);
+        console.log(this.metadataAccount + " -> " + this.nftTokenMint +' -> '+ this.owner);
     }
 }
 
-function writeJson(data: TokenInfo[]){
+export function writeJson(data: TokenInfo[]){
     let json = JSON.stringify(data);
     fs.writeFileSync(PROGRESS_FILE_PATH, json);
 }
 
-function readJson(): TokenInfo[] {
+export function readJson(): TokenInfo[] {
     return JSON.parse(fs.readFileSync(PROGRESS_FILE_PATH).toString());
 }
 
@@ -101,6 +107,7 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
         //console.log(nameLenght);
         let name = "";
         for (let j = 0; j< nameLenght; j++){
+            if (nameBuffer.readUInt8(j)==0) break;
             name += String.fromCharCode(nameBuffer.readUInt8(j));
         }
         allInfo[i].nftName = name;
@@ -108,6 +115,13 @@ async function getAllNFTsForCreator(c: web3.Connection, verifiedCreator: string)
     }
     return allInfo;
 
+}
+
+async function prepareSend(data: TokenInfo[]){
+    data.forEach(element => {
+        element.sendableAmount = AMOUNT_TO_SEND;
+        element.sendableTokenMint = TOKEN_TO_SEND;
+    });
 }
 
 async function main(){
@@ -120,7 +134,7 @@ async function main(){
     //console.log(owner.toBase58());
 
     if(!fs.existsSync(PROGRESS_FILE_PATH)){
-        const allInfo = await getAllNFTsForCreator(c, "PUT_VERIFIED_CREATOR_HERE");
+        const allInfo = await getAllNFTsForCreator(c, VERIFIED_CREATOR);
         writeJson(allInfo);
         console.log("file saved");
     }
@@ -130,10 +144,14 @@ async function main(){
     console.log("finding owners...")
     allInfo.forEach(async tokenInfo => {
         if (!tokenInfo.owner) {
-            tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.tokenMint)).toBase58();
+            tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.nftTokenMint)).toBase58();
             writeJson(allInfo);
         }
     });
+
+    prepareSend(allInfo);
+    writeJson(allInfo);
+
     console.log("DONE");
 }
 
