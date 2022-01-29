@@ -155,4 +155,6 @@ async function main(){
     console.log("DONE");
 }
 
-main();
+if (require.main === module) {
+    main();
+}

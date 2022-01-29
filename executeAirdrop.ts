@@ -4,8 +4,9 @@ import * as anchor from "@project-serum/anchor";
 import * as splToken from "@solana/spl-token";
 const fs = require('fs');
 
-import { TokenInfo, readJson, writeJson, PROGRESS_FILE_PATH } from "./prepareAirdrop";
+import { TokenInfo, readJson, writeJson } from "./prepareAirdrop";
 
+const USE_MAINNET = false;
 const MAGIC_EDEN_ADDRESS = "GUfCR9mK6azb9vcpsxgXyj7XRPAKJd4KMHTTVvtncGgp";
 
 async function sendToken(connection: web3.Connection, dropInfo: TokenInfo, sender: web3.Keypair): Promise<string>{
@@ -76,7 +77,7 @@ export function loadWalletKey(keypairFile:string): web3.Keypair {
 
 async function main() {
 
-    const rpcHost = web3.clusterApiUrl("devnet");
+    const rpcHost = web3.clusterApiUrl(USE_MAINNET?"mainnet-beta":"devnet");
     const c = new anchor.web3.Connection(rpcHost);
 
     const allInfo = readJson();
@@ -104,4 +105,6 @@ async function main() {
 
 }
 
-main();
+if (require.main === module) {
+    main();
+}
