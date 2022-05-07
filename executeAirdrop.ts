@@ -3,13 +3,10 @@ import * as web3 from '@solana/web3.js';
 import * as anchor from "@project-serum/anchor";
 import * as splToken from "@solana/spl-token";
 const fs = require('fs');
-import { TokenInfo, readJson, writeJson } from "./prepareAirdrop";
+import { readJson, writeJson } from "./prepareAirdrop";
+import { ERROR_FILE_PATH, USE_MAINNET, KEYPAIR_FILE, MAGIC_EDEN_ADDRESS, MAGIC_EDEN_ESCROW } from './constants';
+import { TokenInfo } from './tokenInfo';
 
-const USE_MAINNET = false;
-const MAGIC_EDEN_ADDRESS = "GUfCR9mK6azb9vcpsxgXyj7XRPAKJd4KMHTTVvtncGgp";
-const MAGIC_EDEN_ESCROW = "1BWutmTvYPwDtmw9abTkS4Ssr8no61spGAvW1X6NDix";
-export const ERROR_FILE_PATH = "./error.json";
-export const KEYPAIR_FILE = "C:\\Users\\loopc\\wkdir\\DEVkasD4qwUJQ8LS7rcJHcGDQQzrEtWgk2jB6v5FHngo.json";
 
 async function sendToken(connection: web3.Connection, dropInfo: TokenInfo, sender: web3.Keypair): Promise<string>{
 
