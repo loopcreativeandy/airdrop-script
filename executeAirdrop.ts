@@ -93,7 +93,8 @@ async function main() {
     //return;
     
 
-    let counter = 0;
+    let success = 0;
+    let errors = 0;
     let errorTransactions: TokenInfo[] = [];
     for (let i = 0; i<allInfo.length; i++){
         if(!allInfo[i].txid){
@@ -102,8 +103,10 @@ async function main() {
                 continue;
             }
             const txid = await sendToken(c, allInfo[i], sender).then((txn) => {
+                success++;
                 return txn;
             }).catch( err => {
+                errors++;
                 console.log(err);
                 //unfortunately I didn't figure out how to get the txn id from the error, but the wallet is easy enough to look at
                 errorTransactions.push(allInfo[i]); 
@@ -116,7 +119,7 @@ async function main() {
         }
     }
     writeErrors(errorTransactions);
-    console.log(counter);
+    console.log(`${success} successful transactions and ${errors} error/timeout transactions`);
 
 }
 
