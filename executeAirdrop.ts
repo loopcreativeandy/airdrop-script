@@ -7,6 +7,10 @@ import { readJson, writeJson } from "./prepareAirdrop";
 import { ERROR_FILE_PATH, USE_MAINNET, KEYPAIR_FILE, MAGIC_EDEN_ADDRESS, MAGIC_EDEN_ESCROW } from './constants';
 import { TokenInfo } from './tokenInfo';
 
+export function writeErrors(data: TokenInfo[]){
+    let json = JSON.stringify(data);
+    fs.writeFileSync(ERROR_FILE_PATH, json);
+}
 
 async function sendToken(connection: web3.Connection, dropInfo: TokenInfo, sender: web3.Keypair): Promise<string>{
 
@@ -74,10 +78,6 @@ export function loadWalletKey(keypairFile:string): web3.Keypair {
     return loaded;
 }
 
-  export function writeErrors(data: TokenInfo[]){
-    let json = JSON.stringify(data);
-    fs.writeFileSync(ERROR_FILE_PATH, json);
-}
 
 async function main() {
 
