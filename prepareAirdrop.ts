@@ -4,11 +4,11 @@ import * as anchor from "@project-serum/anchor";
 import { assert } from 'console';
 import * as splToken from "@solana/spl-token";
 import { token } from '@project-serum/anchor/dist/cjs/utils';
-const fs = require('fs');
+import * as fs from 'fs';
 
 const VERIFIED_CREATOR = "AHx6cQKhJQ6vV9zhb37B7gKtRRGDuLtTfNWgvMiLDJp7";
 const TOKEN_TO_SEND = "toKPe7ENJiRBANPLnnp4dHs7ccFyHRg2oSEPdDfumg8";
-const AMOUNT_TO_SEND = 42000000000; // including decimans
+const AMOUNT_TO_SEND = 42000000000; // including decimals
 
 export const PROGRESS_FILE_PATH = "./progress.json";
 
@@ -16,7 +16,7 @@ export class TokenInfo {
     metadataAccount: string;
     nftTokenMint: string;
     nftName: string | undefined;
-    owner: string | undefined;
+    ownerWallet: string | undefined;
     sendableTokenMint: string | undefined;
     sendableAmount: number | undefined;
     txid: string | undefined;
@@ -27,7 +27,7 @@ export class TokenInfo {
     }
 
     show(){
-        console.log(this.metadataAccount + " -> " + this.nftTokenMint +' -> '+ this.owner);
+        console.log(this.metadataAccount + " -> " + this.nftTokenMint +' -> '+ this.ownerWallet);
     }
 }
 
@@ -143,8 +143,8 @@ async function main(){
         
     console.log("finding owners...")
     allInfo.forEach(async tokenInfo => {
-        if (!tokenInfo.owner) {
-            tokenInfo.owner = await (await getOwnerForNFT(c, tokenInfo.nftTokenMint)).toBase58();
+        if (!tokenInfo.ownerWallet) {
+            tokenInfo.ownerWallet = await (await getOwnerForNFT(c, tokenInfo.nftTokenMint)).toBase58();
             writeJson(allInfo);
         }
     });
